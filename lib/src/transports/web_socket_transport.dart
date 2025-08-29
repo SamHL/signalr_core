@@ -8,7 +8,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'web_socket_channel_api.dart'
     // ignore: uri_does_not_exist
-    if (dart.library.html) 'web_socket_channel_html.dart'
+    if (dart.library.js_interop) 'web_socket_channel_html.dart'
     // ignore: uri_does_not_exist
     if (dart.library.io) 'web_socket_channel_io.dart' as platform;
 
