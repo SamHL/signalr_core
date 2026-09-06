@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:signalr_core/signalr_core.dart';
 import 'package:test/test.dart';
 
@@ -60,6 +62,25 @@ void main() {
       // the second stop() always landed on an already completed completer.
       await queue.stop();
       expect(() => queue.stop(), returnsNormally);
+    });
+
+    test('stopping before any send raises no unhandled rejection', () async {
+      // The constructor used to seed _transportResult, so a queue stopped
+      // before anything was sent had sendLoop reject a completer nobody was
+      // waiting on. That reached the zone as a fatal unhandled error. The
+      // background teardown we now do on every app pause makes stopping a
+      // freshly started connection routine, so this path matters.
+      final errors = <Object>[];
+      await runZonedGuarded(() async {
+        final queue = TransportSendQueue(transport: _FakeTransport());
+        await queue.stop();
+        // Let any rejection reach the zone before asserting.
+        await Future<void>.delayed(Duration.zero);
+      }, (error, stack) {
+        errors.add(error);
+      });
+
+      expect(errors, isEmpty);
     });
 
     test('still stops a queue that is idle', () async {

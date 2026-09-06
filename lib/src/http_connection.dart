@@ -716,8 +716,13 @@ class TransportSendQueue {
 
   TransportSendQueue({this.transport}) {
     _sendBufferedData = Completer();
-    _transportResult = Completer();
 
+    // _transportResult is deliberately left null until the first send. send()
+    // creates it on demand, so seeding one here only produced a completer
+    // nobody was waiting on: stopping a queue before anything was ever sent
+    // made sendLoop reject it with Connection stopped, and with no listener
+    // that surfaced as a fatal unhandled error. The break in sendLoop already
+    // null checks, so leaving it null is all that is needed.
     _sendLoopPromise = sendLoop();
   }
 
