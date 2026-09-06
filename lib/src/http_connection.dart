@@ -729,7 +729,15 @@ class TransportSendQueue {
 
   Future<void>? stop() {
     _executing = false;
-    _sendBufferedData.complete();
+    // Only complete it if the send loop has not already been woken. _bufferData
+    // completes this same completer on every queued send and sendLoop replaces
+    // it only after it resumes, so a socket dying inside that window used to
+    // make this throw StateError synchronously. Nothing on the onclose path
+    // catches that, so it escaped as a fatal unhandled error. Skipping the
+    // complete is safe: the loop is already awake and breaks on _executing.
+    if (!_sendBufferedData.isCompleted) {
+      _sendBufferedData.complete();
+    }
     return _sendLoopPromise;
   }
 

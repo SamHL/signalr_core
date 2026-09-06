@@ -131,14 +131,19 @@ class WebSocketTransport implements Transport {
         onclose!(error);
       } else {
         if (closeCode != 0 && closeCode != 1000) {
+          // An abnormal close is an error, so report it and stop. Falling
+          // through to onclose(null) as well ran the whole close path twice,
+          // which meant the second TransportSendQueue.stop always landed on an
+          // already completed completer.
           onclose!(
             Exception(
               'WebSocket closed with status code: '
               '$closeCode ($closeReason).',
             ),
           );
+        } else {
+          onclose!(null);
         }
-        onclose!(null);
       }
     }
   }
